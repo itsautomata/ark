@@ -1,0 +1,6 @@
+local_docs
+*.egg-info/
+__pycache__/
+.venv/
+test_papers/
+

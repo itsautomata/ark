@@ -1,0 +1,20 @@
+[project]
+name = "ark"
+version = "0.1.0"
+description = "scientific integrity: multi-agent verification of research papers."
+requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.28.0",
+    "typer>=0.15.0",
+    "rich>=13.0.0",
+]
+
+[build-system]
+requires = ["setuptools>=75.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["ark*", "tests*"]
+
+[project.scripts]
+ark = "ark.cli:main"
