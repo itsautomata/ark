@@ -20,11 +20,30 @@ observations while extracting the references:
 
 from ark.models import Paper, Reference
 
+ABSTRACT = (
+    "Time series Forecasting with large language models (LLMs) requires bridging "
+    "numerical patterns and natural language. Effective forecasting on LLM often "
+    "relies on extensive pre-processing and fine-tuning. Recent studies show that "
+    "a frozen LLM can rival specialized forecasters when supplied with a carefully "
+    "engineered natural-language prompt, but crafting such a prompt for each task "
+    "is itself onerous and ad-hoc. We introduce FLAIRR-TS, a test-time prompt "
+    "optimization framework that utilizes an agentic system: a Forecaster-agent "
+    "generates forecasts using an initial prompt, which is then refined by a refiner "
+    "agent, informed by past outputs and retrieved analogs. This adaptive prompting "
+    "generalizes across domains using creative prompt templates and generates "
+    "high-quality forecasts without intermediate code generation. Experiments on "
+    "benchmark datasets show improved accuracy over static prompting and "
+    "retrieval-augmented baselines, approaching the performance of specialized "
+    "prompts. FLAIRR-TS provides a practical alternative to tuning, achieving "
+    "strong performance via its agentic approach to adaptive prompt refinement "
+    "and retrieval."
+)
+
 PAPER = Paper(
     title="FLAIRR-TS: Forecasting LLM-Agents with Iterative Refinement and Retrieval for Time Series",
     authors=["Gunjan Jalori", "Preetika Verma", "Sercan O. Arik"],
     year=2025,
-    claims=[],  # layer 0 does not extract claims yet
+    abstract=ABSTRACT,
     references=[
         # 0
         Reference(
