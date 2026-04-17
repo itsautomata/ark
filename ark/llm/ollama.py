@@ -1,10 +1,12 @@
-"""Ollama client. calls local Gemma for claim extraction and inflation scoring."""
+"""Ollama client. calls local or remote Gemma for claim extraction and inflation scoring."""
 
 from __future__ import annotations
 
+import os
+
 import httpx
 
-OLLAMA_URL = "http://localhost:11434"
+OLLAMA_URL = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 DEFAULT_MODEL = "gemma4:e4b"
 
 
