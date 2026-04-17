@@ -2,7 +2,7 @@
 
 scientific integrity tool. takes a research paper, tells you what holds up.
 catches hallucinated citations, flags inflated claims, finds counter-evidence.
-runs on open models, local-first.
+currently using [Gemma 4](https://deepmind.google/models/gemma/gemma-4/) by Google (open source, local-first).
 
 ---
 
@@ -33,17 +33,38 @@ it produces a report on two things:
 
 ## how it works
 
-built in layers. each layer is independently demoable.
+three commands. each does one thing.
 
-### layer 0 (current): citation verification
+### `ark ref`: citation verification
 
-takes a paper (for now, a python fixture structured as claims + references).
+checks if cited references actually exist and match their claimed metadata.
+
 1. queries arxiv for canonical metadata
 2. compares cited title to resolved title (token similarity)
 3. compares cited authors to resolved authors (surname overlap)
 4. outputs verdict: `confirmed`, `not_found`, `metadata_mismatch`, or `unverifiable`
+5. saves report to `reports/<paper>/ref_report.md`
 
-catches arxiv ID hijacks (the most common hallucination pattern): when a citation claims arxiv:X is paper P, but arxiv:X actually points to something unrelated.
+catches arxiv ID hijacks: when a citation claims arxiv:X is paper P, but arxiv:X actually points to something unrelated.
+
+### `ark claim`: claim extraction
+
+extracts verifiable claims from paper text using Gemma (local LLM).
+
+1. sends abstract (and available sections) to Gemma
+2. extracts each claim with its type (attribution, result, scope), section, and linked references
+3. saves to `reports/<paper>/claims.md` (user-editable)
+
+the user reviews claims.md, corrects types, edits text, or removes bad extractions by setting `keep: no`. edits are the source of truth for inflation scoring.
+
+### `ark inflate`: inflation scoring
+
+scores each claim for rhetorical inflation using Gemma.
+
+1. reads claims from `reports/<paper>/claims.md` (user-reviewed) or extracts fresh
+2. scores each claim from 0.0 (conservative) to 1.0 (highly inflated)
+3. provides reasoning and a conservative rewrite for each claim
+4. saves to `reports/<paper>/inflation_report.md`
 
 ---
 
@@ -61,29 +82,68 @@ install globally so `ark` works from anywhere:
 uv tool install -e .
 ```
 
+after code changes, reinstall to pick them up:
+
+```bash
+uv tool install -e . --reinstall
+```
+
+for `ark claim` and `ark inflate`, you also need [Ollama](https://ollama.com/) with a Gemma model:
+
+```bash
+ollama pull gemma4:e4b
+```
+
 ---
 
 ## run
 
-the included fixture is FLAIRR-TS, a real EMNLP 2025 paper with a documented hallucinated citation (source: [HalluCitation Matters](https://arxiv.org/abs/2601.18724)).
+### check citations
 
 ```bash
-uv run ark flairr_ts
+ark ref flairr_ts
 ```
 
-or globally:
+uses the included FLAIRR-TS fixture, a real EMNLP 2025 paper with a documented hallucinated citation (source: [HalluCitation Matters](https://arxiv.org/abs/2601.18724)).
+
+expected: 18 references scanned, 9 confirmed, 4 `metadata_mismatch` (including the documented TEMPO fake), 5 `unverifiable` (no arxiv ID).
+
+### extract claims
 
 ```bash
-ark flairr_ts
+ark claim flairr_ts
 ```
 
-expected output: 18 references scanned, 9 confirmed, 4 `metadata_mismatch` (including the documented TEMPO fake), 5 `unverifiable` (no arxiv ID). `PASS: 1/1 expectations met`.
+extracts claims from the paper's abstract. saves to `reports/flairr_ts/claims.md`. open the file, review, edit, then run inflation scoring.
+
+### score inflation
+
+```bash
+ark inflate flairr_ts
+```
+
+reads your reviewed claims from `claims.md` and scores each one. saves to `reports/flairr_ts/inflation_report.md`.
+
+---
+
+## the workflow
+
+```
+ark ref flairr_ts          → reports/flairr_ts/ref_report.md
+ark claim flairr_ts        → reports/flairr_ts/claims.md (editable)
+  user reviews claims.md
+ark inflate flairr_ts      → reports/flairr_ts/inflation_report.md
+```
+
+`ark ref` works standalone (no LLM needed). `ark claim` and `ark inflate` need Ollama running with Gemma.
+
+re-running a command prompts before overwriting existing reports.
 
 ---
 
 ## adding a paper
 
-before PDF fetching and parsing are wired in, papers are defined directly as python fixtures. each fixture declares a `Paper` with its references and optional `EXPECTED_VERDICTS` for validation.
+papers are defined as python fixtures. each fixture declares a `Paper` with its text and references.
 
 ```python
 from ark.models import Paper, Reference
@@ -92,6 +152,7 @@ PAPER = Paper(
     title="your paper",
     authors=["author one", "author two"],
     year=2025,
+    abstract="the paper's abstract text...",
     references=[
         Reference(
             raw="full citation text",
@@ -111,19 +172,22 @@ EXPECTED_VERDICTS = {
 save as `tests/fixtures/<name>.py` and run:
 
 ```bash
-uv run ark <name>
+ark ref <name>
+ark claim <name>
+ark inflate <name>
 ```
 
 ---
 
 ## what ark is not
 
-- not an AI detector. AI detection has a 61% false positive rate on non-native English. ark checks truth, not authorship.
-- not a replacement for peer review. ark is a microscope, not a judge. LLM-as-judge agrees with human experts 60-68% of the time. ark surfaces signals, you decide.
-- not a tool for paywalled content (yet). ~50% of papers are gated. ark verifies existence for 100%, verifies content for ~50%, and reports the gap honestly.
+- not an AI detector. ark checks truth, not authorship.
+- not a replacement for peer review. ark surfaces signals, you decide.
+- not a tool for paywalled content (yet). ark verifies existence for 100%, verifies content for ~50%, and reports the gap honestly.
 
 ---
 
 ## status
 
-layer 0 working. confirmed catch on documented hallucinations and fake demo data.
+layer 0 (citation verification): working. confirmed catch on documented hallucinations.
+layer 1 (claim extraction + inflation scoring): working. Gemma e4b extracts claims and scores inflation with reasoning and conservative rewrites.
