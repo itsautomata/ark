@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.egg-info/
+reports/
+test_papers/
+local_docs/
+.git/
+.gitignore
+.env
+*.md
