@@ -70,10 +70,30 @@ scores each claim for rhetorical inflation using Gemma.
 
 ## install
 
-requires python 3.12+ and [uv](https://docs.astral.sh/uv/).
+two options. pick whichever fits your setup.
+
+### option A: Docker (nothing else needed)
+
+requires only [Docker](https://docs.docker.com/get-docker/).
 
 ```bash
+git clone <repo-url> ark && cd ark
+./ark_docker setup              # builds image, starts ollama, pulls gemma4
+./ark_docker ref flairr_ts      # run
+./ark_docker status             # check if running
+./ark_docker down               # stop when done
+```
+
+everything runs inside containers. no local dependencies.
+
+### option B: local install
+
+requires python 3.12+, [uv](https://docs.astral.sh/uv/), and [Ollama](https://ollama.com/).
+
+```bash
+git clone <repo-url> ark && cd ark
 uv sync --python 3.12
+ollama pull gemma4:e4b
 ```
 
 install globally so `ark` works from anywhere:
@@ -82,21 +102,30 @@ install globally so `ark` works from anywhere:
 uv tool install -e .
 ```
 
-after code changes, reinstall to pick them up:
+after code changes, reinstall:
 
 ```bash
 uv tool install -e . --reinstall
 ```
 
-for `ark claim` and `ark inflate`, you also need [Ollama](https://ollama.com/) with a Gemma model:
+### remote GPU (optional)
+
+if your machine lacks RAM for Gemma, run Ollama on a remote server:
 
 ```bash
-ollama pull gemma4:e4b
+# on the server
+ollama serve && ollama pull gemma4:e4b
+
+# on your machine
+export OLLAMA_HOST=http://server-ip:11434
+ark claim flairr_ts    # runs locally, Gemma runs remotely
 ```
 
 ---
 
 ## run
+
+all examples below use `ark` (local install). for Docker, replace `ark` with `./ark_docker`.
 
 ### check citations
 
