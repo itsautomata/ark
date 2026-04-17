@@ -31,8 +31,19 @@ class Paper:
     title: str
     authors: list[str] = field(default_factory=list)
     year: int | None = None
+    abstract: str = ""
+    sections: dict[str, str] = field(default_factory=dict)  # e.g. {"introduction": "...", "related_work": "..."}
     claims: list[Claim] = field(default_factory=list)
     references: list[Reference] = field(default_factory=list)
+
+
+@dataclass
+class InflationScore:
+    """result of scoring one claim for rhetorical inflation."""
+    claim: Claim
+    score: float  # 0.0 conservative, 1.0 highly inflated
+    conservative_rewrite: str
+    reasoning: str
 
 
 @dataclass
@@ -56,6 +67,8 @@ class IntegrityReport:
     """structured output for a paper."""
     paper: Paper
     verdicts: list[Verdict]
+    claims: list[Claim] = field(default_factory=list)
+    inflation_scores: list[InflationScore] = field(default_factory=list)
 
     @property
     def counts(self) -> dict[str, int]:
