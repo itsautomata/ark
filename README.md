@@ -78,10 +78,10 @@ requires only [Docker](https://docs.docker.com/get-docker/).
 
 ```bash
 git clone <repo-url> ark && cd ark
-./ark_docker setup              # builds image, starts ollama, pulls gemma4
-./ark_docker ref flairr_ts      # run
-./ark_docker status             # check if running
-./ark_docker down               # stop when done
+./run setup              # builds image, starts ollama, pulls gemma4
+./run ref flairr_ts      # run
+./run status             # check if running
+./run down               # stop when done
 ```
 
 everything runs inside containers. no local dependencies.
@@ -125,7 +125,7 @@ ark claim flairr_ts    # runs locally, Gemma runs remotely
 
 ## run
 
-all examples below use `ark` (local install). for Docker, replace `ark` with `./ark_docker`.
+all examples below use `ark` (local install). for Docker, replace `ark` with `./run`.
 
 ### check citations
 
