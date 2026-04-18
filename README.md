@@ -1,4 +1,13 @@
-# ark
+```
+ _______  _______  _
+(  ___  )(  ____ )| \    /\
+| (   ) || (    )||  \  / /
+| (___) || (____)||  (_/ /
+|  ___  ||     __)|   _ (
+| (   ) || (\ (   |  ( \ \
+| )   ( || ) \ \__|  /  \ \
+|/     \||/   \__/|_/    \/
+```
 
 scientific integrity tool. takes a research paper, tells you what holds up.
 catches hallucinated citations, flags inflated claims, finds counter-evidence.
