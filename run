@@ -1,0 +1,99 @@
+#!/bin/bash
+# ark CLI. runs everything in Docker.
+#
+# first time:  ./run setup     (builds image, starts ollama, pulls gemma)
+# then:        ./run ref flairr_ts
+#              ./run claim flairr_ts
+#              ./run inflate flairr_ts
+# stop:        ./run down
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR/docker"
+
+MODEL="${ARK_MODEL:-gemma4:e4b}"
+PORT="${OLLAMA_PORT:-11434}"
+
+case "${1:-}" in
+    setup)
+        echo "building ark image..."
+        docker compose build ark
+
+        echo "starting ollama..."
+        docker compose up -d ollama
+
+        echo "waiting for ollama to be healthy..."
+        docker compose exec ollama sh -c "until ollama list > /dev/null 2>&1; do sleep 1; done"
+
+        echo "pulling $MODEL..."
+        docker compose exec ollama ollama pull "$MODEL"
+
+        echo ""
+        echo "ready. run:"
+        echo "  ./run ref flairr_ts"
+        echo "  ./run claim flairr_ts"
+        echo "  ./run inflate flairr_ts"
+        ;;
+
+    down)
+        docker compose down
+        lsof -ti:$PORT | xargs kill 2>/dev/null || true
+        echo "stopped."
+        ;;
+
+    clean)
+        docker compose down --rmi local
+        lsof -ti:$PORT | xargs kill 2>/dev/null || true
+        echo "cleaned. containers and ark image removed. gemma weights kept."
+        ;;
+
+    prune)
+        echo "this will remove everything including gemma model weights (~10GB)."
+        read -p "continue? [y/N] " confirm
+        if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
+            docker compose down --rmi all --volumes
+            lsof -ti:$PORT | xargs kill 2>/dev/null || true
+            echo "pruned. all containers, images, and volumes removed."
+        else
+            echo "cancelled."
+        fi
+        ;;
+
+    status)
+        if docker compose ps ollama 2>/dev/null | grep -q "Up"; then
+            echo "ollama: running"
+            if docker compose exec ollama ollama list 2>/dev/null | grep -q "$MODEL"; then
+                echo "model: $MODEL ready"
+            else
+                echo "model: $MODEL not pulled. run ./run setup"
+            fi
+        else
+            echo "ollama: not running. run ./run setup"
+        fi
+        ;;
+
+    "")
+        if docker compose ps ollama 2>/dev/null | grep -q "Up"; then
+            docker compose run --rm ark
+        else
+            echo ""
+            echo "  ark: scientific integrity tool"
+            echo ""
+            echo "  docker commands:"
+            echo "    ./run setup    build + start ollama + pull gemma"
+            echo "    ./run status   check current state"
+            echo "    ./run down     stop containers"
+            echo "    ./run clean    remove ark image (keeps gemma)"
+            echo "    ./run prune    remove everything"
+        fi
+        ;;
+
+    *)
+        if ! docker compose ps ollama 2>/dev/null | grep -q "Up"; then
+            echo "ollama not running. run ./run setup first."
+            exit 1
+        fi
+        docker compose run --rm ark "$@"
+        ;;
+esac
