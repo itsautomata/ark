@@ -10,16 +10,48 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+# gold palette
+import typer.rich_utils as _ru
+_ru.STYLE_OPTION = "bold #D4A017"
+_ru.STYLE_SWITCH = "#CD853F"
+_ru.STYLE_METAVAR = "#C9A96E"
+_ru.STYLE_USAGE = "#D4A017"
+_ru.STYLE_USAGE_COMMAND = "bold #D4A017"
+_ru.STYLE_COMMANDS_TABLE_FIRST_COLUMN = "bold #D4A017"
+_ru.STYLE_COMMANDS_PANEL_BORDER = "#8B6914"
+_ru.STYLE_OPTIONS_PANEL_BORDER = "#8B6914"
+_ru.STYLE_ERRORS_PANEL_BORDER = "#CD5C5C"
+
 REPORTS_DIR = Path(__file__).parent.parent / "reports"
+
+BANNER = """[#D4A017]
+ _______  _______  _
+(  ___  )(  ____ )| \\    /\\
+| (   ) || (    )||  \\  / /
+| (___) || (____)||  (_/ /
+|  ___  ||     __)|   _ (
+| (   ) || (\\ (   |  ( \\ \\
+| )   ( || ) \\ \\__|  /  \\ \\
+|/     \\||/   \\__/|_/    \\/
+[/#D4A017]
+[#C9A96E]scientific integrity tool[/#C9A96E]
+"""
 
 app = typer.Typer(
     name="ark",
-    help="scientific integrity tool. catches hallucinated citations and inflated claims.",
-    no_args_is_help=True,
     rich_markup_mode="rich",
     context_settings={"help_option_names": ["-h", "--help"]},
 )
 console = Console()
+
+
+@app.callback(invoke_without_command=True)
+def main_callback(ctx: typer.Context) -> None:
+    """scientific integrity tool. catches hallucinated citations and inflated claims."""
+    if ctx.invoked_subcommand is None:
+        console.print(BANNER)
+        console.print(ctx.get_help())
+        raise typer.Exit()
 
 
 def _load_fixture(name: str):
